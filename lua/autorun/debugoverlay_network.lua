@@ -27,8 +27,13 @@ if SERVER then
 		debug_write[name] = function(...)
 			local args = {...}
 
-			for i, var in ipairs(args) do
-				net["Write" .. types[i]](var)
+			for i, type_name in ipairs(types) do
+				if args[i] then
+					net.WriteBool(true)
+					net["Write" .. type_name](args[i])
+				else
+					net.WriteBool(false)
+				end
 			end
 		end
 	end
@@ -53,10 +58,12 @@ else
 			local args = {}
 
 			for i, type_name in ipairs(types) do
-				args[#args + 1] = net["Read" .. type_name]()
+				if net.ReadBool() then
+					args[i] = net["Read" .. type_name]()
+				end
 			end
 
-			return unpack(args)
+			return args
 		end
 	end
 
@@ -64,7 +71,8 @@ else
 		local name = net.ReadString()
 
 		if debug_read[name] then
-			debugoverlay[name](debug_read[name]())
+			local args = debug_read[name]()
+			debugoverlay[name](args[1], args[2], args[3], args[4], args[5], args[6], args[7])
 		end
 	end)
 end
